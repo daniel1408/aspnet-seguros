@@ -144,8 +144,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
-    <None Include="Properties\PublishProfiles\PocSeg - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\PocSeg - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\segurostexas - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\segurostexas - Web Deploy.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -171,7 +171,7 @@
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>3979</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>http://localhost:3979/</IISUrl>
+          <IISUrl>http://localhost:3980/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
