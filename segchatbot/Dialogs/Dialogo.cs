@@ -75,7 +75,7 @@ namespace segchatbot
         [LuisIntent("InformationCompany")]
         public async Task InformationCompany(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("<b>Texas Seguros</b>");
+            await context.PostAsync("Texas Seguros");
             await Delay();
             await context.PostAsync("O empenho em analisar a constante divulgação das informações maximiza as possibilidades por conta do sistema de formação de quadros que corresponde às necessidades.");
             await Delay();
@@ -101,7 +101,7 @@ namespace segchatbot
         [LuisIntent("Help")]
         public async Task Help(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("<b>Posso lhe oferecer as seguintes funcionalidades</b>");
+            await context.PostAsync("Posso lhe oferecer as seguintes funcionalidades");
             await Delay();
             await context.PostAsync("\n- Estimar uma pacote de Seguro que seja específico às suas necessidades" +
                                     "\n- Contratar um pacote específico sem passar pela estimativa personalizada" +
@@ -116,7 +116,7 @@ namespace segchatbot
         public async Task Faq(IDialogContext context, LuisResult result)
         {
 
-            await context.PostAsync("<b>Temos aqui algumas dúvidas frequentes</b>");
+            await context.PostAsync("Temos aqui algumas dúvidas frequentes");
             await Delay();
 
             await context.PostAsync("É possível cancelar o seguro?" +

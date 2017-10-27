@@ -20,7 +20,7 @@ namespace segchatbot
             {
                 try
                 {
-                    //Simular digitação
+                    //Simular digitação enquanto controi a resposta
                     var connector = new ConnectorClient(new Uri(activity.ServiceUrl));
                     Activity isTypingReply = activity.CreateReply();
                     isTypingReply.Type = ActivityTypes.Typing;
