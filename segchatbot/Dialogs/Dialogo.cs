@@ -61,6 +61,8 @@ namespace segchatbot
         [LuisIntent("ConsultForCpf")]
         public async Task ConsultForCpf(IDialogContext context, LuisResult result)
         {
+            //Incluir opção de CNPJ
+            // Validação de CPF ou CNPJ
             await context.PostAsync("Consultar meus pacotes por CPF - NÃO IMPLEMENTADO.");
             context.Wait(MessageReceived);
         }
@@ -225,7 +227,7 @@ namespace segchatbot
             }
         }
 
-        //All
+        
         private static async Task<IMessageActivity> BackMenu(IDialogContext context)
         {
             IMessageActivity menuMessage = context.MakeMessage();
@@ -234,7 +236,7 @@ namespace segchatbot
             return menuMessage;
         }
 
-        //All
+        
         private static async Task Delay()
         {
             await Task.Delay(1600);
@@ -321,6 +323,7 @@ namespace segchatbot
 
         private async Task afterEsporte(IDialogContext context, IAwaitable<string> result)
         {
+            // Validação do modelo de datas. (Limites anteriores e superiores).
             string data = await result;
             information.Add(data);
 
@@ -331,8 +334,9 @@ namespace segchatbot
         private async Task afterDataIda(IDialogContext context, IAwaitable<string> result)
         {
             string dataVolta = await result;
-            information.Add(dataVolta);
+            // Validação do modelo de datas e verificação se a data de partida é anterior à data de volta.
 
+            information.Add(dataVolta);
             PromptDialog.Text(context, afterDataDes, "Quantas pessoas pretende levar na viajem");
         }
 
