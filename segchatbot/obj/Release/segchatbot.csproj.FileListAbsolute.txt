@@ -40,3 +40,5 @@ C:\Users\daniel.costa\Desktop\Pessoal\aspnet-seguros\segchatbot\bin\zh-hans\Micr
 C:\Users\daniel.costa\Desktop\Pessoal\aspnet-seguros\segchatbot\obj\Release\segchatbot.csprojResolveAssemblyReference.cache
 C:\Users\daniel.costa\Desktop\Pessoal\aspnet-seguros\segchatbot\obj\Release\Bot Application1.dll
 C:\Users\daniel.costa\Desktop\Pessoal\aspnet-seguros\segchatbot\obj\Release\Bot Application1.pdb
+C:\Users\daniel.costa\Desktop\Pessoal\aspnet-seguros\segchatbot\bin\Microsoft.Rest.ClientRuntime.xml
+C:\Users\daniel.costa\Desktop\Pessoal\aspnet-seguros\segchatbot\bin\pt-BR\Microsoft.Bot.Builder.resources.dll

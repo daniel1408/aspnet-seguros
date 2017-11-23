@@ -7,16 +7,16 @@ using segchatbot.Service;
 using segchatbot.Util;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 
 namespace segchatbot
 {
     [Serializable]
-    [LuisModel("e1e189c6-ec12-46b9-8fda-9a7e3acfef9b", "cd059269ec6a4df38f158793e800b7be")]
+    [LuisModel("9573b30d-3ef9-4970-88cd-673d7b28a876", "0b9d35219fee43e3b9571d43b27288dd")]
     public class Dialogo : LuisDialog<Object>
     {
         List<string> information = new List<string>();
-
 
         [LuisIntent("Greeting")]
         public async Task Saudacao(IDialogContext context, LuisResult result)
@@ -70,8 +70,47 @@ namespace segchatbot
         [LuisIntent("HiringInsurance")]
         public async Task HiringInsurance(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("Contratar um pacote especifico - NÃO IMPLEMENTADO.");
-            context.Wait(MessageReceived);
+            await context.PostAsync("A seguir tenho todos os pacotes de seguro oferecidos por nós");
+            await Delay();
+            await context.PostAsync("Lembrando que você pode encontrar um pacote específico para suas necessidades digitando 'fazer cotação de seguro' a qualquer momento");
+            await Delay();
+            await context.PostAsync("\n- Pacote Premium" +
+                                    "\n- Pacote Basic" +
+                                    "\n- Pacote Hoary Hedghog" +
+                                    "\n- Pacote Edgy Eft" +
+                                    "\n- Pacote Feisty Fawn" +
+                                    "\n- Pacote Gutsy Gibbon" +
+                                    "\n- Pacote Hardy Heron" +
+                                    "\n- Pacote Intrepid Ibex" +
+                                    "\n- Pacote Jaunty Jackalope" +
+                                    "\n- Pacote Lucid Lynx" +
+                                    "\n- Pacote Natty Narwhal" +
+                                    "\n- Pacote Oneiric Ocelot" +
+                                    "\n- Pacote Quantal Quetzal" +
+                                    "\n- Pacote Raring Ringtail" +
+                                    "\n- Pacote Saucy Salamander" +
+                                    "\n- Pacote Trusty Tahr " +
+                                    "\n- Pacote Enterprise");            
+            await Delay();
+            PromptDialog.Text(context, afterHiringInsurance, "Digite no chat o nome do pacote que lhe interessa.");
+        }
+
+        private async Task afterHiringInsurance(IDialogContext context, IAwaitable<string> result)
+        {
+            string pacote = await result;
+            List<Package> pacotes = ApiPacotes.GetAllPackages();
+
+            IMessageActivity menuMessage = context.MakeMessage();
+            menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+            menuMessage.Attachments = await getAttachment.HirePackage(pacotes);
+            await context.PostAsync(menuMessage);
+        }
+
+
+        private async Task hire(IDialogContext context, IAwaitable<string> result)
+        {
+
+
         }
 
         [LuisIntent("InformationCompany")]
@@ -156,13 +195,6 @@ namespace segchatbot
             context.Wait(MessageReceived);
         }
 
-        [LuisIntent("Religiao")]
-        public async Task Religiao(IDialogContext context, LuisResult result)
-        {
-            //Religião
-            await context.PostAsync("Pertenço à religião Umbanda, mais especificamente da classe dos tocadores de tambor");
-            context.Wait(MessageReceived);
-        }
         [LuisIntent("MelhorDestino")]
         public async Task MelhorDestino(IDialogContext context, LuisResult result)
         {
@@ -175,7 +207,7 @@ namespace segchatbot
         public async Task Descontente(IDialogContext context, LuisResult result)
         {
             //Não gostei de você
-            await context.PostAsync("Se nem Maomé agradou todo mundo, não sou eu que vou agradar!");
+            await context.PostAsync("Não dá pra agradar todo mundo!");
             context.Wait(MessageReceived);
         }
 
@@ -265,12 +297,13 @@ namespace segchatbot
             information.Add(estado);
             await context.PostAsync($"Muito bem, {estado} confirmado");
 
-            PromptDialog.Text(context, afterDestino, "Agora me diga o lugar destino");
+            PromptDialog.Text(context, afterEsporte, "Agora me diga o lugar destino");
         }
 
         private async Task afterDestino(IDialogContext context, IAwaitable<string> result)
         {
             string destino = await result;
+
             information.Add(destino);
             await context.PostAsync($"Muito bem, {destino} é um ótimo destino");
 
@@ -318,26 +351,62 @@ namespace segchatbot
                 await context.PostAsync("Legal. Menos risco para sua vida!");
             }
 
-            PromptDialog.Text(context, afterEsporte, "Mas em que data pretende viajar?");
+            PromptDialog.Text(context, afterEsporte, "Mas em que data pretende viajar? DD-MM-AAAA");
         }
+
 
         private async Task afterEsporte(IDialogContext context, IAwaitable<string> result)
         {
             // Validação do modelo de datas. (Limites anteriores e superiores).
             string data = await result;
-            information.Add(data);
 
-            PromptDialog.Text(context, afterDataIda, "E a data de desembarque?");
-
+            try
+            {
+                DateTime dateValue = DateTime.Parse(data);
+                DateTime thisDay = DateTime.Today;
+                if(thisDay < dateValue)
+                {
+                    await context.PostAsync("Não é possível escolher uma data menor do que a data atual");
+                    PromptDialog.Text(context, afterEsporte, "Entre novamente com a data de partida.");
+                }
+                else
+                {
+                    await context.PostAsync($"Data: {dateValue} confirmada");
+                    information.Add(dateValue.ToString());
+                    PromptDialog.Text(context, afterDataIda, "E a data de desembarque? DD-MM-AAAA");
+                }
+            }
+            catch
+            {
+                await context.PostAsync("Infelizmente não consegui entender essa data");
+                PromptDialog.Text(context, afterEsporte, "Entre novamente com a data de partida.");
+            }
         }
 
         private async Task afterDataIda(IDialogContext context, IAwaitable<string> result)
         {
             string dataVolta = await result;
-            // Validação do modelo de datas e verificação se a data de partida é anterior à data de volta.
-
-            information.Add(dataVolta);
-            PromptDialog.Text(context, afterDataDes, "Quantas pessoas pretende levar na viajem");
+            try
+            {
+                DateTime dateValue = DateTime.Parse(dataVolta);
+                DateTime dataIda = DateTime.Parse(information[information.Count]);
+                if (dateValue < dataIda)
+                {
+                    await context.PostAsync("Não é possível escolher uma data menor do que a data de embarque");
+                    PromptDialog.Text(context, afterEsporte, "Entre com a data de desembarque novamente");
+                }
+                else
+                {
+                    await context.PostAsync($"Data: {dateValue} confirmada");
+                    information.Add(dateValue.ToString());
+                    PromptDialog.Text(context, afterDataDes, "Quantas pessoas pretende levar na viagem");
+                }
+            }
+            catch
+            {
+                await context.PostAsync("Infelizmente não consegui entender essa data");
+                PromptDialog.Text(context, afterEsporte, "Entre com a data de desembarque novamente");
+            }
         }
 
         private async Task afterDataDes(IDialogContext context, IAwaitable<string> result)
@@ -395,5 +464,64 @@ namespace segchatbot
             await context.PostAsync(menuMessage);
             context.Wait(MessageReceived);
         }
+
+        /*
+        public async Task Rentabilidade(IDialogContext context, LuisResult result)
+        {
+            //Rentabilidade
+            //Rentabilidade rentabilidade = await ITAUSolClient.ObterRentabilidade(accesstoken);
+
+            List<Double> value = new List<double>()
+            {
+                0.0069,
+                0.0133,
+                0.0120,
+                0.0127,
+                0.0116,
+                0.0075,
+                0.0067,
+                0.0082,
+                0.0113,
+                0.0101,
+                0.0083,
+                0.0054,
+            };
+
+            List<UnidadeRentabilidade> unRet = new List<UnidadeRentabilidade>();
+            foreach (Double item in value)
+            {
+                unRet.Add(new UnidadeRentabilidade() { acumuladoMes = item });
+            }
+
+            List<List<UnidadeRentabilidade>> rentabilidade = new List<List<UnidadeRentabilidade>>();
+            rentabilidade.Add(unRet);
+
+
+            if (rentabilidade == null)
+            {
+                await context.PostAsync("Não possível encontrar a rentabilidade deste usuário");
+            }
+            else
+            {
+                double rentabilidadeconsolidada = 1;
+                double i;
+                int meses = 0;
+                foreach (List<UnidadeRentabilidade> lur in rentabilidade)
+                {
+                    foreach (UnidadeRentabilidade ur in lur)
+                    {
+                        i = 1 + ur.acumuladoMes;
+                        rentabilidadeconsolidada = rentabilidadeconsolidada * i;
+                        meses += 1;
+                    }
+                }
+                rentabilidadeconsolidada = rentabilidadeconsolidada - 1;
+                rentabilidadeconsolidada = rentabilidadeconsolidada * 100;
+
+                string resposta = String.Format("Sua rentabilidade consolidada nos últimos {0} meses foi de {1:N4} %", meses.ToString(), rentabilidadeconsolidada);
+                await context.PostAsync(resposta);
+            }
+        }
+        */
     }
 }

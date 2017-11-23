@@ -15,7 +15,9 @@ namespace segchatbot
     public class MessagesController : ApiController
     {
         public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
+
         {
+
             if (activity.Type == ActivityTypes.Message)
             {
                 try

@@ -369,5 +369,40 @@ namespace segchatbot.Util
             listAttachments.Add(a.ToAttachment());
             return listAttachments;
         }
+
+        public async static Task<List<Attachment>> HirePackage(List<Package> packages)
+        {
+            List<Attachment> listAttachments = new List<Attachment>();
+
+            foreach(Package item in packages)
+            {
+                HeroCard card = new HeroCard
+                {
+                    Title = item.Title,
+                    Subtitle = item.Details,
+                    Text = item.Cost,
+                    Images = new List<CardImage>
+                    {
+                        new CardImage
+                        {
+                            Url = item.Image
+                        }
+                    },
+                    Buttons =
+                    {
+                        new CardAction
+                        {
+                            Title = "Contratar",
+                            Value = $"Contratar pacote {item.Title}",
+                            Type = "imBack"
+                        },
+                    }
+                };
+                listAttachments.Add(card.ToAttachment());
+            }
+
+            return listAttachments;
+        }
+        
     }
 }
