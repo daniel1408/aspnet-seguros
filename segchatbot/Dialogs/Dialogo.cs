@@ -58,59 +58,40 @@ namespace segchatbot
             context.Wait(MessageReceived);
         }
 
-        [LuisIntent("ConsultForCpf")]
-        public async Task ConsultForCpf(IDialogContext context, LuisResult result)
-        {
-            //Incluir opção de CNPJ
-            // Validação de CPF ou CNPJ
-            await context.PostAsync("Consultar meus pacotes por CPF - NÃO IMPLEMENTADO.");
-            context.Wait(MessageReceived);
-        }
-
         [LuisIntent("HiringInsurance")]
         public async Task HiringInsurance(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("A seguir tenho todos os pacotes de seguro oferecidos por nós");
-            await Delay();
-            await context.PostAsync("Lembrando que você pode encontrar um pacote específico para suas necessidades digitando 'fazer cotação de seguro' a qualquer momento");
-            await Delay();
-            await context.PostAsync("\n- Pacote Premium" +
-                                    "\n- Pacote Basic" +
-                                    "\n- Pacote Hoary Hedghog" +
-                                    "\n- Pacote Edgy Eft" +
-                                    "\n- Pacote Feisty Fawn" +
-                                    "\n- Pacote Gutsy Gibbon" +
-                                    "\n- Pacote Hardy Heron" +
-                                    "\n- Pacote Intrepid Ibex" +
-                                    "\n- Pacote Jaunty Jackalope" +
-                                    "\n- Pacote Lucid Lynx" +
-                                    "\n- Pacote Natty Narwhal" +
-                                    "\n- Pacote Oneiric Ocelot" +
-                                    "\n- Pacote Quantal Quetzal" +
-                                    "\n- Pacote Raring Ringtail" +
-                                    "\n- Pacote Saucy Salamander" +
-                                    "\n- Pacote Trusty Tahr " +
-                                    "\n- Pacote Enterprise");            
-            await Delay();
-            PromptDialog.Text(context, afterHiringInsurance, "Digite no chat o nome do pacote que lhe interessa.");
-        }
+            if (result.Entities.Count == 0)
+            {
+                await context.PostAsync("A seguir tenho todos os pacotes de seguro oferecidos por nós");
+                await context.PostAsync("Lembrando que você pode encontrar um pacote específico para suas necessidades digitando 'fazer cotação de seguro' a qualquer momento");
+                List<Package> pacotes = ApiPacotes.GetAllPackages();
 
-        private async Task afterHiringInsurance(IDialogContext context, IAwaitable<string> result)
-        {
-            string pacote = await result;
-            List<Package> pacotes = ApiPacotes.GetAllPackages();
+                IMessageActivity menuMessage = context.MakeMessage();
+                menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+                menuMessage.Attachments = await getAttachment.HirePackage(pacotes);
+                await context.PostAsync(menuMessage);
+            }
+            else
+            {
+                string p = result.Entities[0].Entity;
+                if(p != "Basic" || p != "Premium" || p != "Recreation" || p != "Short Trip" || p != "Business" ||
+                p != "Long Trip" || p != "Enterprise"){
+                    await context.PostAsync("Infelizmente não encontramos um pacote com esse nome.");
+                    await context.PostAsync("Veja as opções predefinidas que oferecemos");
+                    
+                    List<Package> pacotes = ApiPacotes.GetAllPackages();
 
-            IMessageActivity menuMessage = context.MakeMessage();
-            menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-            menuMessage.Attachments = await getAttachment.HirePackage(pacotes);
-            await context.PostAsync(menuMessage);
-        }
-
-
-        private async Task hire(IDialogContext context, IAwaitable<string> result)
-        {
-
-
+                    IMessageActivity menuMessage = context.MakeMessage();
+                    menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+                    menuMessage.Attachments = await getAttachment.HirePackage(pacotes);
+                    await context.PostAsync(menuMessage);
+                }else
+                {
+                    await context.PostAsync($"Muito bem. Pacote {p} Confirmado!");
+                    await hire(context, result, p);
+                }
+            }
         }
 
         [LuisIntent("InformationCompany")]
@@ -188,6 +169,12 @@ namespace segchatbot
             PromptDialog.Choice(context, afterInicio, Option.Escolha, "Sua saída será do Brasil?");
         }
 
+        private async Task hire(IDialogContext context, LuisResult result, string Package)
+        {
+
+
+        }
+
         [LuisIntent("None")]
         public async Task None(IDialogContext context, LuisResult result)
         {
@@ -210,6 +197,7 @@ namespace segchatbot
             await context.PostAsync("Não dá pra agradar todo mundo!");
             context.Wait(MessageReceived);
         }
+        
 
         [LuisIntent("QuoteCoin")]
         public async Task QuoteCoin(IDialogContext context, LuisResult result)
