@@ -75,8 +75,8 @@ namespace segchatbot
             else
             {
                 string p = result.Entities[0].Entity;
-                if(p != "Basic" || p != "Premium" || p != "Recreation" || p != "Short Trip" || p != "Business" ||
-                p != "Long Trip" || p != "Enterprise"){
+                if (p != "basic" && p != "premium" && p != "recreation" && p != "short trip" && p != "business" &&
+                p != "long Trip" && p != "enterprise"){
                     await context.PostAsync("Infelizmente não encontramos um pacote com esse nome.");
                     await context.PostAsync("Veja as opções predefinidas que oferecemos");
                     
@@ -88,7 +88,6 @@ namespace segchatbot
                     await context.PostAsync(menuMessage);
                 }else
                 {
-                    await context.PostAsync($"Muito bem. Pacote {p} Confirmado!");
                     await hire(context, result, p);
                 }
             }
@@ -171,8 +170,25 @@ namespace segchatbot
 
         private async Task hire(IDialogContext context, LuisResult result, string Package)
         {
+            await context.PostAsync($"Muito bem. Pacote {Package} Confirmado!");
+            PromptDialog.Text(context, afterHire, "Agora informe por favor seu CPF");
+        }
 
+        private async Task afterHire(IDialogContext context, IAwaitable<string> result)
+        {
+            string cpf = await result;
+            CpfValidation validation = new CpfValidation();
+            bool valid = validation.Valida(cpf);
 
+            if (valid == false)
+            {
+                await context.PostAsync("CPF incorreto");
+                PromptDialog.Text(context, afterHire, "Informe novamente seu CPF");
+            }
+            else
+            {
+                await context.PostAsync("Parabéns. Pacote contratado");
+            }
         }
 
         [LuisIntent("None")]
@@ -285,7 +301,7 @@ namespace segchatbot
             information.Add(estado);
             await context.PostAsync($"Muito bem, {estado} confirmado");
 
-            PromptDialog.Text(context, afterEsporte, "Agora me diga o lugar destino");
+            PromptDialog.Text(context, afterDestino, "Agora me diga o lugar destino");
         }
 
         private async Task afterDestino(IDialogContext context, IAwaitable<string> result)
@@ -428,12 +444,12 @@ namespace segchatbot
             {
                 await context.PostAsync("Esses são os pacotes que podemos oferecer");
 
+                List<Package> pacotes = ApiPacotes.GetAllPackages();
+
                 IMessageActivity menuMessage = context.MakeMessage();
                 menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-                menuMessage.Attachments = await getAttachment.showPackage();
-
+                menuMessage.Attachments = await getAttachment.HirePackage(pacotes);
                 await context.PostAsync(menuMessage);
-                context.Wait(MessageReceived);
             }
         }
 
