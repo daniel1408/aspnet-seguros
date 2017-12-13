@@ -12,7 +12,7 @@ namespace segchatbot.Service
 {
     public class ApiPacotes
     {
-        private static string UrlPackage = "http://api-package.azurewebsites.net/api/Package";
+        private static string UrlPackage = "http://localhost:5000/api/Package";
 
         public static List<Package> GetAllPackages()
         {

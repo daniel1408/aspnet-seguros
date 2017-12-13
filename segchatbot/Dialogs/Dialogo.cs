@@ -2,6 +2,7 @@
 using Microsoft.Bot.Builder.Luis;
 using Microsoft.Bot.Builder.Luis.Models;
 using Microsoft.Bot.Connector;
+using segchatbot.Dialogs;
 using segchatbot.Models;
 using segchatbot.Service;
 using segchatbot.Util;
@@ -16,7 +17,8 @@ namespace segchatbot
     [LuisModel("9573b30d-3ef9-4970-88cd-673d7b28a876", "0b9d35219fee43e3b9571d43b27288dd")]
     public class Dialogo : LuisDialog<Object>
     {
-        List<string> information = new List<string>();
+        HashSet<DadosSeguro> DicionarioDados = new HashSet<DadosSeguro>();
+        DadosSeguro dados = new DadosSeguro();
 
         [LuisIntent("Greeting")]
         public async Task Saudacao(IDialogContext context, LuisResult result)
@@ -108,17 +110,6 @@ namespace segchatbot
             await context.PostAsync(await BackMenu(context));
         }
 
-        [LuisIntent("ShowPackage")]
-        public async Task ShowPackage(IDialogContext context, LuisResult result)
-        {
-
-            IMessageActivity menuMessage = context.MakeMessage();
-            menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-            menuMessage.Attachments = await getAttachment.showPackage();
-
-            await context.PostAsync(menuMessage);
-        }
-
         [LuisIntent("Help")]
         public async Task Help(IDialogContext context, LuisResult result)
         {
@@ -165,7 +156,7 @@ namespace segchatbot
         [LuisIntent("InsuranceQuote")]
         public async Task InsuranceQuote(IDialogContext context, LuisResult result)
         {
-            PromptDialog.Choice(context, afterInicio, Option.Escolha, "Sua saída será do Brasil?");
+            PromptDialog.Choice(context, SaidaBrasil, Option.Escolha, "Sua saída será do Brasil?");
         }
 
         private async Task hire(IDialogContext context, LuisResult result, string Package)
@@ -187,7 +178,64 @@ namespace segchatbot
             }
             else
             {
-                await context.PostAsync("Parabéns. Pacote contratado");
+                //await context.PostAsync("Parabéns. Pacote contratado");
+                await context.PostAsync("Os detalhes da contratação serão enviados por e-mail.");
+                PromptDialog.Text(context, addEmail, "Nos informe seu e-mail por favor.");
+            }
+        }
+
+        string StoreMail = null;
+        private async Task addEmail(IDialogContext context, IAwaitable<string> result)
+        {
+            string email = await result;
+            EmailValidation validation = new EmailValidation();
+            bool valid = validation.IsValidEmail(email);
+
+            if (valid == false)
+            {
+                await context.PostAsync("E-mail incorreto");
+                PromptDialog.Text(context, addEmail, "Por favor entre com um e-mail válido.");
+            }
+            else
+            {
+                StoreMail = email;
+                PromptDialog.Text(context, confirmationEmail, "Digite novamente seu e-mail para confirmação.");
+            }
+        }
+
+        private async Task confirmationEmail(IDialogContext context, IAwaitable<string> result)
+        {
+            string email = await result;
+            if (email != StoreMail)
+            {
+                await context.PostAsync("E-mail não confere com e-mail anterior.");
+                PromptDialog.Text(context, confirmationEmail, "Digite novamente.");
+            }
+            else
+            {
+                await context.PostAsync("Dados informados");
+                PromptDialog.Choice(context, dataConfirmation, Option.Escolha, "Deseja alterar algum dado?");
+            }
+        }
+
+        private async Task dataConfirmation(IDialogContext context, IAwaitable<string> result)
+        {
+            string confirmation = await result;
+            if (confirmation == "Não")
+            {
+                await context.PostAsync("Contratação efetivada.");
+
+                Email envioEmail = new Email();
+                envioEmail.EnviaEmail("daniel-costa@ufu.br");
+
+                await context.PostAsync("Os dados da contratação juntamente com o boleto de cobrança foram enviadas por e-mail");
+                await context.PostAsync(await BackMenu(context));
+
+            }
+            else
+            {
+                await context.PostAsync("Editar dados");
+
             }
         }
 
@@ -262,30 +310,22 @@ namespace segchatbot
                 return reply;
             }
         }
-
-        
-        private static async Task<IMessageActivity> BackMenu(IDialogContext context)
-        {
-            IMessageActivity menuMessage = context.MakeMessage();
-            menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-            menuMessage.Attachments = await getAttachment.informationCompany();
-            return menuMessage;
-        }
-
         
         private static async Task Delay()
         {
             await Task.Delay(1600);
         }
 
-        private async Task afterInicio(IDialogContext context, IAwaitable<string> result)
+        private async Task SaidaBrasil(IDialogContext context, IAwaitable<string> result)
         {
-            string aux = await result;
-            if (aux == "Sim")
+            string confimacaoSaida = await result;
+            if (confimacaoSaida == "Sim")
             {
-                information.Add("Brasil");
+                dados.SaidaBrasil = true;
                 await context.PostAsync("Muito bem, vamos prosseguir");
-                PromptDialog.Text(context, afterSaida, "Qual o estado de Saída?");
+                //PromptDialog.Text(context, EstadoSaida, "Qual o estado de Saída?");
+                //Testes
+                await EstadoSaida(context);
             }
 
             else
@@ -295,152 +335,151 @@ namespace segchatbot
             }
         }
 
-        private async Task afterSaida(IDialogContext context, IAwaitable<string> result)
+        private async Task EstadoSaida(IDialogContext context)
         {
-            string estado = await result;
-            information.Add(estado);
-            await context.PostAsync($"Muito bem, {estado} confirmado");
-
-            PromptDialog.Text(context, afterDestino, "Agora me diga o lugar destino");
+            await context.PostAsync("Qual o Estado de saída?");
+            List<HeroCardModel> cardModels = new List<HeroCardModel>
+            {
+                new HeroCardModel
+                {
+                    Title = "Estados",
+                    Text = "Escolha algum dos estados abaixo como ponto de partida",
+                }
+            };
+            context.Call(new CarouselChoiceSai(cardModels), EscolhaEstado);
         }
 
-        private async Task afterDestino(IDialogContext context, IAwaitable<string> result)
+        private async Task EscolhaEstado(IDialogContext context, IAwaitable<string> result)
+        {
+            string estadoSaida = await result;
+            if(estadoSaida != "Outro")
+            {
+                await context.PostAsync($"Muito bem, {estadoSaida} confirmado");
+            }
+            dados.EstadoSaida = estadoSaida;
+            await Destino(context);
+
+        }
+
+        private async Task Destino(IDialogContext context)
+        {
+            await context.PostAsync("Agora me diga o lugar destino");
+            await context.PostAsync($"Temos as seguintes opções de destinos");
+
+            List<HeroCardModel> cardModels = new List<HeroCardModel>
+            {
+                new HeroCardModel
+                {
+                    Title = "Destinos",
+                    Text = "Escolha algum dos destinos",
+                }
+            };
+            context.Call(new CarouselChoiceSai(cardModels), EscolhaDestino);
+        }
+
+        private async Task EscolhaDestino(IDialogContext context, IAwaitable<string> result)
         {
             string destino = await result;
 
-            information.Add(destino);
-            await context.PostAsync($"Muito bem, {destino} é um ótimo destino");
-
-            PromptDialog.Choice(context, europeu, Option.Escolha, "Terá algum país europeu como conexão?  Preciso saber pois as politicas de seguro nos países europeus são diferentes");
+            await context.PostAsync($"Muito bem, {destino} anotado");
+            dados.Destino = destino;
+            PromptDialog.Choice(context, EsporteRadical, Option.Escolha, "Vai praticar algum esporte radical tais como Alpinismo, Rapel, Mergulho, etc?");
 
         }
 
-        private async Task europeu(IDialogContext context, IAwaitable<string> result)
+        private async Task EsporteRadical(IDialogContext context, IAwaitable<string> result)
         {
-            string aux = await result;
-            if (aux == "Sim")
-            {
-                PromptDialog.Text(context, AfterEuropeu, "Informe o país europeu em que vai passar");
-            }
-            else
-            {
-                information.Add("S/País Europeu");
-                await context.PostAsync("OK");
-                PromptDialog.Choice(context, afterPaisEuro, Option.Escolha, "Vai praticar algum esporte radical tais como Alpinismo, Rapel, Mergulho, etc?");
-            }
-        }
-
-        private async Task AfterEuropeu(IDialogContext context, IAwaitable<string> result)
-        {
-            string paisEuropeu = await result;
-
-            information.Add(paisEuropeu);
-            await context.PostAsync($"País {paisEuropeu} confirmado");
-
-            PromptDialog.Choice(context, afterPaisEuro, Option.Escolha, "Vai praticar algum esporte radical tais como Alpinismo, Rapel, Mergulho, etc?");
-        }
-        private async Task afterPaisEuro(IDialogContext context, IAwaitable<string> result)
-        {
-            String esporte = await result;
+            string esporte = await result;
 
             if (esporte == "Sim")
             {
-                information.Add(esporte);
+                dados.EsporteRadical = true;
                 await context.PostAsync("Legal. se divirta com cuidado!");
             }
 
             else
             {
-                information.Add("Não");
+                dados.EsporteRadical = false;
                 await context.PostAsync("Legal. Menos risco para sua vida!");
             }
 
-            PromptDialog.Text(context, afterEsporte, "Mas em que data pretende viajar? DD-MM-AAAA");
+            PromptDialog.Text(context, DataPartida, "Mas em que data pretende viajar? DD-MM-AAAA");
         }
 
 
-        private async Task afterEsporte(IDialogContext context, IAwaitable<string> result)
+        private async Task DataPartida(IDialogContext context, IAwaitable<string> result)
         {
-            // Validação do modelo de datas. (Limites anteriores e superiores).
-            string data = await result;
+            string dataPartida = await result;
 
             try
             {
-                DateTime dateValue = DateTime.Parse(data);
+                DateTime dateSaida = DateTime.Parse(dataPartida);
                 DateTime thisDay = DateTime.Today;
-                if(thisDay < dateValue)
+                if(thisDay > dateSaida)
                 {
                     await context.PostAsync("Não é possível escolher uma data menor do que a data atual");
-                    PromptDialog.Text(context, afterEsporte, "Entre novamente com a data de partida.");
+                    PromptDialog.Text(context, DataPartida, "Entre novamente com a data de partida.");
                 }
                 else
                 {
-                    await context.PostAsync($"Data: {dateValue} confirmada");
-                    information.Add(dateValue.ToString());
-                    PromptDialog.Text(context, afterDataIda, "E a data de desembarque? DD-MM-AAAA");
+                    dados.DataSaida = dateSaida;
+                    await context.PostAsync($"Data: {dateSaida} confirmada");
+                    PromptDialog.Text(context, DataDesembarque, "E a data de desembarque? DD-MM-AAAA");
                 }
             }
             catch
             {
                 await context.PostAsync("Infelizmente não consegui entender essa data");
-                PromptDialog.Text(context, afterEsporte, "Entre novamente com a data de partida.");
+                PromptDialog.Text(context, DataPartida, "Entre novamente com a data de partida.");
             }
         }
 
-        private async Task afterDataIda(IDialogContext context, IAwaitable<string> result)
+        private async Task DataDesembarque(IDialogContext context, IAwaitable<string> result)
         {
             string dataVolta = await result;
             try
             {
-                DateTime dateValue = DateTime.Parse(dataVolta);
-                DateTime dataIda = DateTime.Parse(information[information.Count]);
-                if (dateValue < dataIda)
-                {
-                    await context.PostAsync("Não é possível escolher uma data menor do que a data de embarque");
-                    PromptDialog.Text(context, afterEsporte, "Entre com a data de desembarque novamente");
-                }
-                else
-                {
-                    await context.PostAsync($"Data: {dateValue} confirmada");
-                    information.Add(dateValue.ToString());
-                    PromptDialog.Text(context, afterDataDes, "Quantas pessoas pretende levar na viagem");
-                }
+                DateTime dateDesembarque = DateTime.Parse(dataVolta);
+
+                dados.DataDesembarque = dateDesembarque;
+                await context.PostAsync($"Data: {dateDesembarque} confirmada");
+                PromptDialog.Number(context, QuantidadePessoas, "Quantas pessoas pretende levar na viagem");
+                
             }
             catch
             {
                 await context.PostAsync("Infelizmente não consegui entender essa data");
-                PromptDialog.Text(context, afterEsporte, "Entre com a data de desembarque novamente");
+                PromptDialog.Text(context, DataDesembarque, "Entre com a data de desembarque novamente");
             }
         }
 
-        private async Task afterDataDes(IDialogContext context, IAwaitable<string> result)
+        private async Task QuantidadePessoas(IDialogContext context, IAwaitable<long> result)
         {
-            string pessoas = await result;
-            information.Add(pessoas);
-
+            long pessoas = await result;
+            dados.QuantidadePessoas = pessoas;
+            DicionarioDados.Add(dados);
             await printDetails(context);
-            information.Clear();
-
         }
 
         private async Task printDetails(IDialogContext context)
         {
-            String Subtitle = "*DADOS INFORMADOS*\nSaída: " + information[0] + "\nEstado de saída: " + information[1] + "\nPaís de destino: " + information[2] + "\nPais Europeu: " + information[3] + "\nEsporte Radical? " +
-                information[4] + "\nData de embarque: " + information[5] + "\nData de desembarque: " + information[6] + "\nPessoas na viagem: " + information[7];
+            foreach (DadosSeguro item in DicionarioDados)
+            {
+                await context.PostAsync("Dados informados: ");
+                await context.PostAsync($"\n- Data de embarque: {item.DataSaida.ToString()}" +
+                                        $"\n- Data de desembarque: {item.DataDesembarque.ToString()}" +
+                                        $"\n- Destino: {item.Destino.ToString()}" +
+                                        $"\n- Estado de Partida: {item.EstadoSaida.ToString()}" +
+                                        $"\n- Quantidade de pessoas: {item.QuantidadePessoas.ToString()}");
+            }
 
-            await context.PostAsync(Subtitle);
-
-            PromptDialog.Choice(context, afterInformation, Option.Escolha, "Deseja alterar algum dos dados?");
+            PromptDialog.Choice(context, Confirmacao, Option.Escolha, "Deseja confirmar estes dados?");
         }
 
-        private async Task afterInformation(IDialogContext context, IAwaitable<string> result)
+        private async Task Confirmacao(IDialogContext context, IAwaitable<string> result)
         {
             string aux = await result;
             if (aux == "Sim")
-            {
-                PromptDialog.Text(context, AlterarInformation, "Qual dado pretende alterar?");
-            }
-            else
             {
                 await context.PostAsync("Esses são os pacotes que podemos oferecer");
 
@@ -451,12 +490,11 @@ namespace segchatbot
                 menuMessage.Attachments = await getAttachment.HirePackage(pacotes);
                 await context.PostAsync(menuMessage);
             }
-        }
-
-        private async Task AlterarInformation(IDialogContext context, IAwaitable<string> result)
-        {
-            await context.PostAsync("Dodos a implementar");
-            context.Wait(MessageReceived);
+            else
+            {
+                await context.PostAsync("Muito bem, mas teremos que fazer novamente as últimas perguntas.");
+                //PromptDialog.Text(context, EstadoSaida, "Qual o estado de Saída??");
+            }
         }
 
         private async Task printOptions(IDialogContext context, string saudacao)
@@ -469,63 +507,12 @@ namespace segchatbot
             context.Wait(MessageReceived);
         }
 
-        /*
-        public async Task Rentabilidade(IDialogContext context, LuisResult result)
+        private static async Task<IMessageActivity> BackMenu(IDialogContext context)
         {
-            //Rentabilidade
-            //Rentabilidade rentabilidade = await ITAUSolClient.ObterRentabilidade(accesstoken);
-
-            List<Double> value = new List<double>()
-            {
-                0.0069,
-                0.0133,
-                0.0120,
-                0.0127,
-                0.0116,
-                0.0075,
-                0.0067,
-                0.0082,
-                0.0113,
-                0.0101,
-                0.0083,
-                0.0054,
-            };
-
-            List<UnidadeRentabilidade> unRet = new List<UnidadeRentabilidade>();
-            foreach (Double item in value)
-            {
-                unRet.Add(new UnidadeRentabilidade() { acumuladoMes = item });
-            }
-
-            List<List<UnidadeRentabilidade>> rentabilidade = new List<List<UnidadeRentabilidade>>();
-            rentabilidade.Add(unRet);
-
-
-            if (rentabilidade == null)
-            {
-                await context.PostAsync("Não possível encontrar a rentabilidade deste usuário");
-            }
-            else
-            {
-                double rentabilidadeconsolidada = 1;
-                double i;
-                int meses = 0;
-                foreach (List<UnidadeRentabilidade> lur in rentabilidade)
-                {
-                    foreach (UnidadeRentabilidade ur in lur)
-                    {
-                        i = 1 + ur.acumuladoMes;
-                        rentabilidadeconsolidada = rentabilidadeconsolidada * i;
-                        meses += 1;
-                    }
-                }
-                rentabilidadeconsolidada = rentabilidadeconsolidada - 1;
-                rentabilidadeconsolidada = rentabilidadeconsolidada * 100;
-
-                string resposta = String.Format("Sua rentabilidade consolidada nos últimos {0} meses foi de {1:N4} %", meses.ToString(), rentabilidadeconsolidada);
-                await context.PostAsync(resposta);
-            }
+            IMessageActivity menuMessage = context.MakeMessage();
+            menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+            menuMessage.Attachments = await getAttachment.informationCompany();
+            return menuMessage;
         }
-        */
     }
 }

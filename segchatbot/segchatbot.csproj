@@ -126,6 +126,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Dialogs\CarouselChoiceSai.cs" />
     <Compile Include="Dialogs\Dialogo.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
     <Compile Include="Global.asax.cs">
@@ -136,14 +137,18 @@
     <Compile Include="Models\CardModel.cs" />
     <Compile Include="Models\EUR.cs" />
     <Compile Include="Models\GBP.cs" />
+    <Compile Include="Models\HeroCardModel.cs" />
     <Compile Include="Models\Package.cs" />
     <Compile Include="Models\USD.cs" />
     <Compile Include="Models\RootObject.cs" />
+    <Compile Include="Models\DadosSeguro.cs" />
     <Compile Include="Models\Valores.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Service\Email.cs" />
     <Compile Include="Service\ApiPacotes.cs" />
     <Compile Include="Service\ApiCotacao.cs" />
     <Compile Include="Util\CpfValidation.cs" />
+    <Compile Include="Util\EmailValidation.cs" />
     <Compile Include="Util\getAttachment.cs" />
     <Compile Include="Util\Option.cs" />
   </ItemGroup>

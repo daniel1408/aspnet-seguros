@@ -22,7 +22,7 @@ namespace segchatbot.Util
                 {
                     new CardImage
                     {
-                        Url = "https://www.avaus.fi/content/uploads/2015/08/AMI_newsletter_blog_strategia_tiimi_850x650.jpg"
+                        Url = "https://cdn.dribbble.com/users/35617/screenshots/1078842/hirobotdribbble.jpg"
                     }
                 },
                 Title = saudacao,
