@@ -17,8 +17,9 @@ namespace segchatbot
     [LuisModel("9573b30d-3ef9-4970-88cd-673d7b28a876", "0b9d35219fee43e3b9571d43b27288dd")]
     public class Dialogo : LuisDialog<Object>
     {
-        HashSet<DadosSeguro> DicionarioDados = new HashSet<DadosSeguro>();
+        //HashSet<DadosSeguro> DicionarioDados = new HashSet<DadosSeguro>();
         DadosSeguro dados = new DadosSeguro();
+        DadosUser user = new DadosUser();
 
         [LuisIntent("Greeting")]
         public async Task Saudacao(IDialogContext context, LuisResult result)
@@ -78,7 +79,7 @@ namespace segchatbot
             {
                 string p = result.Entities[0].Entity;
                 if (p != "basic" && p != "premium" && p != "recreation" && p != "short trip" && p != "business" &&
-                p != "long Trip" && p != "enterprise"){
+                p != "long Trip" && p != "enterprise" && p != "personal"){
                     await context.PostAsync("Infelizmente não encontramos um pacote com esse nome.");
                     await context.PostAsync("Veja as opções predefinidas que oferecemos");
                     
@@ -162,6 +163,7 @@ namespace segchatbot
         private async Task hire(IDialogContext context, LuisResult result, string Package)
         {
             await context.PostAsync($"Muito bem. Pacote {Package} Confirmado!");
+            await Delay();
             PromptDialog.Text(context, afterHire, "Agora informe por favor seu CPF");
         }
 
@@ -178,7 +180,7 @@ namespace segchatbot
             }
             else
             {
-                //await context.PostAsync("Parabéns. Pacote contratado");
+                user.cpf = cpf;
                 await context.PostAsync("Os detalhes da contratação serão enviados por e-mail.");
                 PromptDialog.Text(context, addEmail, "Nos informe seu e-mail por favor.");
             }
@@ -191,16 +193,16 @@ namespace segchatbot
             EmailValidation validation = new EmailValidation();
             bool valid = validation.IsValidEmail(email);
 
-            if (valid == false)
-            {
-                await context.PostAsync("E-mail incorreto");
-                PromptDialog.Text(context, addEmail, "Por favor entre com um e-mail válido.");
-            }
-            else
-            {
+            //if (valid == false)
+            //{
+            //    await context.PostAsync("E-mail incorreto");
+            //    PromptDialog.Text(context, addEmail, "Por favor entre com um e-mail válido.");
+            //}
+            //else
+            //{
                 StoreMail = email;
                 PromptDialog.Text(context, confirmationEmail, "Digite novamente seu e-mail para confirmação.");
-            }
+            //}
         }
 
         private async Task confirmationEmail(IDialogContext context, IAwaitable<string> result)
@@ -213,28 +215,38 @@ namespace segchatbot
             }
             else
             {
-                await context.PostAsync("Dados informados");
-                PromptDialog.Choice(context, dataConfirmation, Option.Escolha, "Deseja alterar algum dado?");
+                user.email = email;
+                StoreMail = email;
+                await Delay();
+                await context.PostAsync($"\n- CPF: {user.cpf}" +
+                                        $"\n- E-mail de contato: {user.email}");
+
+                await Delay();
+                PromptDialog.Choice(context, dataConfirmation, Option.Escolha, "Deseja confirmar estes dados?");
             }
         }
 
         private async Task dataConfirmation(IDialogContext context, IAwaitable<string> result)
         {
             string confirmation = await result;
-            if (confirmation == "Não")
+            if (confirmation == "Sim")
             {
                 await context.PostAsync("Contratação efetivada.");
 
                 Email envioEmail = new Email();
                 envioEmail.EnviaEmail("daniel-costa@ufu.br");
 
-                await context.PostAsync("Os dados da contratação juntamente com o boleto de cobrança foram enviadas por e-mail");
-                await context.PostAsync(await BackMenu(context));
+                await Delay();
+                await context.PostAsync("Os dados da contratação foram enviadas por e-mail");
+                await context.PostAsync("Iremos avaliar os dados e logo mais mandaremos o boleto de cobrança por e-mail");
+                await Delay();
 
+                await context.PostAsync(await BackMenu(context));
             }
             else
             {
-                await context.PostAsync("Editar dados");
+                await context.PostAsync("Muito bem, mas teremos que fazer novamente as últimas perguntas.");
+                PromptDialog.Text(context, afterHire, "Nos informe por favor seu CPF");
 
             }
         }
@@ -310,11 +322,6 @@ namespace segchatbot
                 return reply;
             }
         }
-        
-        private static async Task Delay()
-        {
-            await Task.Delay(1600);
-        }
 
         private async Task SaidaBrasil(IDialogContext context, IAwaitable<string> result)
         {
@@ -374,7 +381,7 @@ namespace segchatbot
                     Text = "Escolha algum dos destinos",
                 }
             };
-            context.Call(new CarouselChoiceSai(cardModels), EscolhaDestino);
+            context.Call(new CarouselChoiceDes(cardModels), EscolhaDestino);
         }
 
         private async Task EscolhaDestino(IDialogContext context, IAwaitable<string> result)
@@ -457,21 +464,19 @@ namespace segchatbot
         {
             long pessoas = await result;
             dados.QuantidadePessoas = pessoas;
-            DicionarioDados.Add(dados);
             await printDetails(context);
         }
 
         private async Task printDetails(IDialogContext context)
         {
-            foreach (DadosSeguro item in DicionarioDados)
-            {
+            
                 await context.PostAsync("Dados informados: ");
-                await context.PostAsync($"\n- Data de embarque: {item.DataSaida.ToString()}" +
-                                        $"\n- Data de desembarque: {item.DataDesembarque.ToString()}" +
-                                        $"\n- Destino: {item.Destino.ToString()}" +
-                                        $"\n- Estado de Partida: {item.EstadoSaida.ToString()}" +
-                                        $"\n- Quantidade de pessoas: {item.QuantidadePessoas.ToString()}");
-            }
+                await context.PostAsync($"\n- Estado de Partida: {dados.EstadoSaida.ToString()}" +
+                                        $"\n- Destino: {dados.Destino.ToString()}" +
+                                        $"\n- Data de embarque: {dados.DataSaida.ToString()}" +
+                                        $"\n- Data de desembarque: {dados.DataDesembarque.ToString()}" +
+                                        $"\n- Quantidade de pessoas: {dados.QuantidadePessoas.ToString()}");
+            
 
             PromptDialog.Choice(context, Confirmacao, Option.Escolha, "Deseja confirmar estes dados?");
         }
@@ -481,19 +486,18 @@ namespace segchatbot
             string aux = await result;
             if (aux == "Sim")
             {
-                await context.PostAsync("Esses são os pacotes que podemos oferecer");
-
-                List<Package> pacotes = ApiPacotes.GetAllPackages();
+                await context.PostAsync("Esse é o seu pacote personalizado");
+                Package pacotes = PersonalPackage.GetPackage(dados);
 
                 IMessageActivity menuMessage = context.MakeMessage();
                 menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-                menuMessage.Attachments = await getAttachment.HirePackage(pacotes);
+                menuMessage.Attachments = await getAttachment.PackageAttachments(pacotes);
                 await context.PostAsync(menuMessage);
             }
             else
             {
                 await context.PostAsync("Muito bem, mas teremos que fazer novamente as últimas perguntas.");
-                //PromptDialog.Text(context, EstadoSaida, "Qual o estado de Saída??");
+                await EstadoSaida(context);
             }
         }
 
@@ -513,6 +517,10 @@ namespace segchatbot
             menuMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
             menuMessage.Attachments = await getAttachment.informationCompany();
             return menuMessage;
+        }
+        private static async Task Delay()
+        {
+            await Task.Delay(1600);
         }
     }
 }

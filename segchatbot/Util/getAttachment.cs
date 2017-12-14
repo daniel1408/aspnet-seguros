@@ -142,81 +142,28 @@ namespace segchatbot.Util
             return listAttachments;
         }
 
-        public async static Task<List<Attachment>> showPackage()
+        public async static Task<List<Attachment>> PackageAttachments(Package pacote)
         {
             List<Attachment> listAttachments = new List<Attachment>();
+            
 
             HeroCard a = new HeroCard
             {
-                Title = "Pacote 1",
-                Text = "Valor R$ 2.000,00",
-                Images = new List<CardImage>
-                {
-                    new CardImage
-                    {
-                        Url = "http://s3.amazonaws.com/meticulous-website/contents/547/full.png"
-                    }
-                },
+                Title = pacote.Title,
+                Subtitle = pacote.Details,
+                Text = pacote.Cost,
                 Buttons =
                 {
                     new CardAction
                     {
-                        Title = "Contratar",
-                        Value = "Contratar",
+                        Title = "Contratar Pacote",
+                        Value = "Contratar pacote personal",
                         Type = "imBack"
                     }
                 }
-            };
-
-            HeroCard b = new HeroCard
-            {
-                Title = "Pacote 2",
-                Text = "Valor R$ 3.000,00",
-                Images = new List<CardImage>
-                {
-                    new CardImage
-                    {
-                        Url = "http://s3.amazonaws.com/meticulous-website/contents/547/full.png"
-                    }
-                },
-                Buttons =
-                {
-                    new CardAction
-                    {
-                        Title = "Contratar",
-                        Value = "Contratar",
-                        Type = "imBack"
-                    }
-                }
-            };
-
-            HeroCard c = new HeroCard
-            {
-                Title = "Pacote 3",
-                Text = "Valor R$ 1.500,00",
-                Images = new List<CardImage>
-                {
-                    new CardImage
-                    {
-                        Url = "http://s3.amazonaws.com/meticulous-website/contents/547/full.png"
-                    }
-                },
-                Buttons =
-                {
-                    new CardAction
-                    {
-                        Title = "Contratar",
-                        Value = "Contratar",
-                        Type = "imBack"
-                    }
-                }
-
             };
 
             listAttachments.Add(a.ToAttachment());
-            listAttachments.Add(b.ToAttachment());
-            listAttachments.Add(c.ToAttachment());
-
             return listAttachments;
         }
         public async static Task<List<Attachment>> Menu()

@@ -14,7 +14,7 @@ namespace segchatbot.Service
 {
     public class Email
     {
-        public void EnviaEmail(string emailDestinatario)
+        public void EnviaEmail(string email)
         {
             string meuEmail = "dani.frears@gmail.com";
             string minhaSenha = "Swagger1408";
@@ -22,12 +22,14 @@ namespace segchatbot.Service
             MailMessage objEmail = new MailMessage();
             objEmail.From = new MailAddress(meuEmail, "", Encoding.UTF8);
 
-            objEmail.To.Add(emailDestinatario);
+
+            objEmail.To.Add(email);
 
             objEmail.Priority = MailPriority.High;
             objEmail.IsBodyHtml = true;
             objEmail.Subject = "Texas Seguros: Contratação de Pacote";
-            objEmail.Body = "Corpo do Email";
+            objEmail.Body = "Pacote enviado para avaliação\n\n Assim que avaliarmos os seus dados, iremos mandar o boteto de cobrança";
+
             objEmail.SubjectEncoding = Encoding.GetEncoding("ISO-8859-1");
             objEmail.BodyEncoding = Encoding.GetEncoding("ISO-8859-1");
 
