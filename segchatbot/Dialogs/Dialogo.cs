@@ -193,16 +193,16 @@ namespace segchatbot
             EmailValidation validation = new EmailValidation();
             bool valid = validation.IsValidEmail(email);
 
-            //if (valid == false)
-            //{
-            //    await context.PostAsync("E-mail incorreto");
-            //    PromptDialog.Text(context, addEmail, "Por favor entre com um e-mail válido.");
-            //}
-            //else
-            //{
+            if (valid == false)
+            {
+               await context.PostAsync("E-mail incorreto");
+               PromptDialog.Text(context, addEmail, "Por favor entre com um e-mail válido.");
+            }
+            else
+            {
                 StoreMail = email;
                 PromptDialog.Text(context, confirmationEmail, "Digite novamente seu e-mail para confirmação.");
-            //}
+            }
         }
 
         private async Task confirmationEmail(IDialogContext context, IAwaitable<string> result)
@@ -234,7 +234,7 @@ namespace segchatbot
                 await context.PostAsync("Contratação efetivada.");
 
                 Email envioEmail = new Email();
-                envioEmail.EnviaEmail("daniel-costa@ufu.br");
+                envioEmail.EnviaEmail(user.email);
 
                 await Delay();
                 await context.PostAsync("Os dados da contratação foram enviadas por e-mail");
