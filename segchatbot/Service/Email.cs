@@ -17,7 +17,7 @@ namespace segchatbot.Service
         public void EnviaEmail(string email)
         {
             string meuEmail = "dani.frears@gmail.com";
-            string minhaSenha = "Swagger1408";
+            string minhaSenha = "";
 
             MailMessage objEmail = new MailMessage();
             objEmail.From = new MailAddress(meuEmail, "", Encoding.UTF8);
